@@ -85,7 +85,7 @@
     <h2>Регистрация / Вход</h2>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Пароль">
-    <input type="text" id="username" placeholder="Имя пользователя">
+    <input type="text" id="username" placeholder="Имя пользователя (только для регистрации)">
     <button onclick="registerUser()">Зарегистрироваться</button>
     <button onclick="loginUser()">Войти</button>
 </div>
@@ -109,6 +109,7 @@
 
     let currentUser = null;
 
+    // --- Регистрация ---
     async function registerUser() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -120,15 +121,15 @@
         }
 
         const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) { alert(error.message); return; }
+        if (error) {
+            alert(error.message);
+            return;
+        }
 
-        currentUser = data.user;
-
-        // Создаём профиль в таблице profiles
-        await supabase.from('profiles').insert([{ id: currentUser.id, username, bio: '', avatar_url: '' }]);
-        showProfile();
+        alert('Регистрация успешна! Проверьте email для подтверждения.');
     }
 
+    // --- Вход ---
     async function loginUser() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -137,9 +138,19 @@
         if (error) { alert(error.message); return; }
 
         currentUser = data.user;
+
+        // Проверяем профиль
+        const { data: profile } = await supabase.from('profiles').select().eq('id', currentUser.id).single();
+
+        if (!profile) {
+            const usernameInput = document.getElementById('username').value || 'User';
+            await supabase.from('profiles').insert([{ id: currentUser.id, username: usernameInput, bio: '', avatar_url: '' }]);
+        }
+
         showProfile();
     }
 
+    // --- Показ профиля ---
     async function showProfile() {
         document.getElementById('registerWindow').classList.add('hidden');
         document.getElementById('profileWindow').classList.remove('hidden');
@@ -153,10 +164,10 @@
             : profile.username.charAt(0).toUpperCase();
     }
 
+    // --- Обновление профиля ---
     async function updateProfile() {
         const bio = document.getElementById('bio').value;
         const fileInput = document.getElementById('avatarInput');
-
         let avatar_url = null;
 
         if (fileInput.files.length > 0) {
@@ -164,7 +175,7 @@
             const fileExt = file.name.split('.').pop();
             const fileName = `${currentUser.id}.${fileExt}`;
 
-            const { data, error } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
+            const { error } = await supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
             if (error) { alert(error.message); return; }
 
             const { publicUrl } = supabase.storage.from('avatars').getPublicUrl(fileName);
@@ -176,6 +187,7 @@
         alert('Профиль обновлён!');
     }
 
+    // --- Выход ---
     async function logoutUser() {
         await supabase.auth.signOut();
         currentUser = null;
