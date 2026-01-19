@@ -3,121 +3,148 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Создай свой Link-in-Bio</title>
+<title>Mini E-ZBio Clone</title>
 <style>
-/* --- ОБЩИЕ СТИЛИ --- */
-* {margin:0; padding:0; box-sizing:border-box; font-family:'Arial', sans-serif;}
-body {min-height:100vh; display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg, #1f1c2c, #928dab); overflow-x:hidden; color:#fff;}
-.container {position:relative; z-index:1; max-width:500px; width:90%; padding:40px 20px; background: rgba(0,0,0,0.25); border-radius:20px; backdrop-filter: blur(10px); box-shadow: 0 15px 40px rgba(0,0,0,0.5); text-align:center;}
-body::before, body::after {content:''; position:fixed; top:-50%; left:-50%; width:200%; height:200%; pointer-events:none; border-radius:50%; background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%); animation: rotate 25s linear infinite; z-index:0;}
-body::after {animation-duration:40s; background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 60%);}
-@keyframes rotate {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+    /* Общий стиль страницы */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #4a90e2, #9013fe);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
 
-/* --- ПРОФИЛЬ --- */
-.profile-img {width:140px; height:140px; border-radius:50%; object-fit:cover; border:3px solid #fff; margin-bottom:20px; transition: transform 0.4s ease, box-shadow 0.4s ease;}
-.profile-img:hover {transform: scale(1.15) rotate(3deg); box-shadow:0 10px 30px rgba(255,255,255,0.3);}
-.name {font-size:28px; font-weight:bold; margin-bottom:10px;}
-.bio {font-size:16px; color:#e0e0e0; margin-bottom:30px;}
+    /* Оконный контейнер */
+    .window {
+        background: #1e1e1e;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        width: 350px;
+        padding: 30px;
+        color: #fff;
+    }
 
-/* --- КНОПКИ --- */
-.links {display:flex; flex-direction:column; gap:15px;}
-.btn {display:flex; align-items:center; justify-content:center; gap:12px; padding:14px 0; width:100%; background: rgba(255,255,255,0.15); color:#fff; font-size:18px; text-decoration:none; border-radius:12px; backdrop-filter: blur(5px); transition: all 0.3s ease, transform 0.3s ease; opacity:0; transform:translateY(20px); border:2px solid transparent;}
-.btn:hover {background: rgba(255,255,255,0.35); transform:translateY(-5px) scale(1.02); border:2px solid #fff; box-shadow:0 8px 25px rgba(255,255,255,0.2);}
-.btn i {font-size:20px;}
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
 
-/* --- АНИМАЦИЯ КНОПОК --- */
-@keyframes btnFadeIn {to{opacity:1; transform:translateY(0);}}
+    /* Поля ввода */
+    input[type="text"], input[type="password"], input[type="email"] {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 10px;
+        border: none;
+        outline: none;
+        font-size: 14px;
+    }
 
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+    /* Кнопки */
+    button {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 12px;
+        border: none;
+        background: #4a90e2;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
 
-/* --- ФОРМА СОЗДАНИЯ ПРОФИЛЯ --- */
-form {display:flex; flex-direction:column; gap:10px;}
-input, textarea {padding:10px; border-radius:8px; border:none; outline:none; font-size:16px;}
-input[type="url"] {color:#000;}
-button {padding:12px; border:none; border-radius:10px; font-size:16px; background:#0073e6; color:#fff; cursor:pointer; transition:0.3s;}
-button:hover {background:#005bb5;}
+    button:hover {
+        background: #357ab8;
+    }
+
+    /* Профиль */
+    .profile {
+        text-align: center;
+    }
+
+    .avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: #4a90e2;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        color: #fff;
+    }
+
+    .logout-btn {
+        background: #e24a4a;
+    }
+
+    .logout-btn:hover {
+        background: #b83434;
+    }
+
+    .hidden {
+        display: none;
+    }
 </style>
 </head>
 <body>
-<div class="container" id="container">
-  <div id="formContainer">
-    <h2>Создай свой профиль</h2>
-    <form id="profileForm">
-      <input type="text" id="nameInput" placeholder="Ваше имя" required>
-      <input type="url" id="photoInput" placeholder="Ссылка на фото" required>
-      <textarea id="bioInput" placeholder="Короткое описание"></textarea>
-      <input type="url" id="link1" placeholder="Ссылка 1 (Telegram/Instagram/...)">
-      <input type="url" id="link2" placeholder="Ссылка 2">
-      <input type="url" id="link3" placeholder="Ссылка 3">
-      <input type="url" id="link4" placeholder="Ссылка 4">
-      <button type="submit">Создать профиль</button>
-    </form>
-  </div>
 
-  <div id="profileContainer" style="display:none;">
-    <img src="" class="profile-img" id="profileImg">
-    <h1 class="name" id="profileName"></h1>
-    <p class="bio" id="profileBio"></p>
-    <div class="links" id="profileLinks"></div>
-    <p style="margin-top:20px; font-size:14px;">Скопируйте ссылку на эту страницу, чтобы поделиться своим профилем.</p>
-  </div>
+<div class="window" id="registerWindow">
+    <h2>Регистрация</h2>
+    <input type="text" id="username" placeholder="Имя пользователя">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Пароль">
+    <button onclick="registerUser()">Зарегистрироваться</button>
+</div>
+
+<div class="window hidden" id="profileWindow">
+    <div class="profile">
+        <div class="avatar" id="avatar">U</div>
+        <h3 id="profileName"></h3>
+        <p id="profileEmail"></p>
+        <button class="logout-btn" onclick="logoutUser()">Выйти</button>
+    </div>
 </div>
 
 <script>
-// --- СОХРАНЕНИЕ ПРОФИЛЯ ---
-const formContainer = document.getElementById('formContainer');
-const profileContainer = document.getElementById('profileContainer');
-const profileForm = document.getElementById('profileForm');
-const container = document.getElementById('container');
+    let currentUser = null;
 
-function showProfile(profile) {
-    document.getElementById('profileImg').src = profile.photo;
-    document.getElementById('profileName').textContent = profile.name;
-    document.getElementById('profileBio').textContent = profile.bio;
-    const linksDiv = document.getElementById('profileLinks');
-    linksDiv.innerHTML = '';
-    profile.links.forEach(l => {
-        if(l) {
-            const a = document.createElement('a');
-            a.href = l;
-            a.target="_blank";
-            a.className = 'btn';
-            a.innerHTML = `<i class="fas fa-link"></i>${l}`;
-            linksDiv.appendChild(a);
+    function registerUser() {
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        if (!username || !email || !password) {
+            alert('Пожалуйста, заполните все поля.');
+            return;
         }
-    });
-    // Появление кнопок по очереди
-    const buttons = linksDiv.querySelectorAll('.btn');
-    buttons.forEach((btn,index)=>{
-        setTimeout(()=>{btn.style.animation='btnFadeIn 0.6s forwards';}, index*200);
-    });
-    formContainer.style.display='none';
-    profileContainer.style.display='block';
-}
 
-profileForm.addEventListener('submit', e=>{
-    e.preventDefault();
-    const profile = {
-        name: document.getElementById('nameInput').value,
-        photo: document.getElementById('photoInput').value,
-        bio: document.getElementById('bioInput').value,
-        links: [
-            document.getElementById('link1').value,
-            document.getElementById('link2').value,
-            document.getElementById('link3').value,
-            document.getElementById('link4').value
-        ]
-    };
-    localStorage.setItem('profile', JSON.stringify(profile));
-    showProfile(profile);
-});
+        currentUser = { username, email };
+        showProfile();
+    }
 
-// --- ЗАГРУЗКА ПРОФИЛЯ ПРИ ОТКРЫТИИ ---
-const savedProfile = JSON.parse(localStorage.getItem('profile'));
-if(savedProfile) showProfile(savedProfile);
+    function showProfile() {
+        document.getElementById('registerWindow').classList.add('hidden');
+        document.getElementById('profileWindow').classList.remove('hidden');
 
-// --- ЭФФЕКТ ФОНА ---
-document.body.addEventListener("click", ()=>{document.body.classList.toggle("clicked");});
+        document.getElementById('profileName').textContent = currentUser.username;
+        document.getElementById('profileEmail').textContent = currentUser.email;
+        document.getElementById('avatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    }
+
+    function logoutUser() {
+        currentUser = null;
+        document.getElementById('profileWindow').classList.add('hidden');
+        document.getElementById('registerWindow').classList.remove('hidden');
+        document.getElementById('username').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+    }
 </script>
+
 </body>
 </html>
