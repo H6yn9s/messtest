@@ -1,597 +1,396 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profile • Liquid Glass</title>
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  <style>
-    :root{
-      --bg1:#040914;
-      --bg2:#061a3a;
-      --bg3:#0b2d5a;
+const SUPABASE_URL = "PASTE_SUPABASE_URL";
+const SUPABASE_ANON = "PASTE_SUPABASE_ANON_KEY";
 
-      --stroke: rgba(255,255,255,.12);
-      --text:#eaf2ff;
-      --muted: rgba(234,242,255,.65);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-      --blue:#4aa3ff;
-      --good:#4dffb5;
-      --bad:#ff5a7a;
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
 
-      --shadow: 0 30px 80px rgba(0,0,0,.45);
-      --radius: 26px;
+function setHint(text){
+  const h = $("hint");
+  if(h) h.textContent = text || "";
+}
+
+function normalizeUsername(u){
+  return (u || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+function isProfilePage(){
+  return location.pathname.includes("profile.html") || location.pathname.includes("/u/");
+}
+
+function getUsernameFromPath(){
+  // поддержка:
+  // /u/username
+  // /profile.html?u=username
+  const p = location.pathname;
+  const idx = p.indexOf("/u/");
+  if(idx !== -1){
+    return p.substring(idx + 3).split("/")[0];
+  }
+  const url = new URL(location.href);
+  return url.searchParams.get("u");
+}
+
+function applyTheme(profile){
+  const accent = profile?.accent || "#7c3aed";
+  document.documentElement.style.setProperty("--accent", accent);
+
+  const bg = $("bg");
+  if(!bg) return;
+
+  if(profile?.theme === "flat"){
+    bg.style.background = "linear-gradient(180deg, #0a0a0f, #07070b)";
+  } else {
+    bg.style.background =
+      `radial-gradient(circle at 30% 20%, ${accent}33, transparent 45%),
+       radial-gradient(circle at 80% 70%, rgba(0,200,255,0.14), transparent 50%),
+       linear-gradient(180deg, #0a0a0f, #07070b)`;
+  }
+}
+
+function goToUser(username){
+  // GitHub Pages не умеет нормальные роуты без 404.html
+  // поэтому делаем fallback:
+  // profile.html?u=username
+  location.href = `./profile.html?u=${encodeURIComponent(username)}`;
+}
+
+// ---------- index page ----------
+async function initIndex(){
+  const tabLogin = $("tabLogin");
+  const tabRegister = $("tabRegister");
+  const loginBox = $("loginBox");
+  const registerBox = $("registerBox");
+
+  if(!tabLogin) return;
+
+  tabLogin.onclick = () => {
+    tabLogin.classList.add("active");
+    tabRegister.classList.remove("active");
+    loginBox.style.display = "block";
+    registerBox.style.display = "none";
+    setHint("");
+  };
+
+  tabRegister.onclick = () => {
+    tabRegister.classList.add("active");
+    tabLogin.classList.remove("active");
+    registerBox.style.display = "block";
+    loginBox.style.display = "none";
+    setHint("");
+  };
+
+  $("btnLogin").onclick = async () => {
+    setHint("Входим...");
+    const email = $("loginEmail").value.trim();
+    const password = $("loginPassword").value;
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if(error){
+      setHint("Ошибка: " + error.message);
+      return;
     }
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:var(--text);
-      overflow-x:hidden;
-      background:
-        radial-gradient(900px 600px at 20% 10%, rgba(74,163,255,.20), transparent 55%),
-        radial-gradient(900px 600px at 80% 20%, rgba(42,125,255,.18), transparent 60%),
-        radial-gradient(900px 700px at 40% 90%, rgba(77,255,181,.10), transparent 60%),
-        linear-gradient(180deg, var(--bg1), var(--bg2) 55%, var(--bg3));
+    const user = data.user;
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if(!prof?.username){
+      setHint("Профиль не найден. Создай новый аккаунт.");
+      return;
     }
 
-    /* optional theme */
-    body.black{
-      background:
-        radial-gradient(900px 600px at 20% 10%, rgba(74,163,255,.14), transparent 55%),
-        radial-gradient(900px 600px at 80% 20%, rgba(42,125,255,.10), transparent 60%),
-        linear-gradient(180deg, #05060a, #060912 60%, #0b1020);
+    setHint("Готово!");
+    goToUser(prof.username);
+  };
+
+  $("btnRegister").onclick = async () => {
+    setHint("Создаём аккаунт...");
+
+    let username = normalizeUsername($("regUsername").value);
+    const email = $("regEmail").value.trim();
+    const password = $("regPassword").value;
+
+    if(username.length < 3){
+      setHint("Username минимум 3 символа (a-z 0-9 _).");
+      return;
     }
 
-    .liquid{
-      position:fixed;
-      inset:-30%;
-      pointer-events:none;
-      filter: blur(50px);
-      opacity:.7;
-      mix-blend-mode: screen;
-      background:
-        radial-gradient(circle at 20% 30%, rgba(74,163,255,.25), transparent 45%),
-        radial-gradient(circle at 70% 20%, rgba(77,255,181,.18), transparent 50%),
-        radial-gradient(circle at 60% 80%, rgba(255,90,122,.12), transparent 55%);
-      animation: floaty 12s ease-in-out infinite;
-    }
-    @keyframes floaty{
-      0%{transform:translate3d(0,0,0) scale(1)}
-      50%{transform:translate3d(40px,-30px,0) scale(1.03)}
-      100%{transform:translate3d(0,0,0) scale(1)}
+    const { data: exists } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("username", username)
+      .maybeSingle();
+
+    if(exists?.username){
+      setHint("Этот username занят.");
+      return;
     }
 
-    body.no-gradient .liquid{display:none}
-
-    .wrap{
-      width:min(980px, 92vw);
-      margin: 26px auto 120px;
-      display:flex;
-      flex-direction:column;
-      gap:16px;
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if(error){
+      setHint("Ошибка: " + error.message);
+      return;
     }
 
-    .glass{
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-      border:1px solid var(--stroke);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+    const user = data.user;
+    if(!user){
+      setHint("Проверь email (возможно нужна верификация).");
+      return;
     }
 
-    .hero{
-      padding:18px;
-      display:flex;
-      gap:16px;
-      align-items:center;
-      position:relative;
-      overflow:hidden;
+    const { error: insertErr } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        username,
+        display_name: username,
+        bio: "",
+        avatar_url: "",
+        theme: "gradient",
+        accent: "#7c3aed"
+      });
+
+    if(insertErr){
+      setHint("Ошибка создания профиля: " + insertErr.message);
+      return;
     }
 
-    .hero::after{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      background:
-        radial-gradient(600px 250px at 20% 20%, rgba(74,163,255,.20), transparent 60%),
-        radial-gradient(600px 250px at 80% 40%, rgba(77,255,181,.10), transparent 60%);
-      pointer-events:none;
-    }
+    setHint("Аккаунт создан!");
+    goToUser(username);
+  };
+}
 
-    .avatar{
-      width:86px;height:86px;
-      border-radius:26px;
-      background:
-        linear-gradient(135deg, rgba(74,163,255,.35), rgba(255,255,255,.08));
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow: 0 18px 40px rgba(0,0,0,.35);
-      display:grid;
-      place-items:center;
-      z-index:2;
-      flex:0 0 auto;
-    }
+// ---------- profile page ----------
+async function uploadAvatar(file, userId){
+  const ext = file.name.split(".").pop();
+  const path = `${userId}/${Date.now()}.${ext}`;
 
-    .avatar span{
-      font-weight:900;
-      font-size:28px;
-      letter-spacing:.5px;
-    }
+  const { error } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { upsert: true });
 
-    .hero-info{
-      z-index:2;
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:5px;
-    }
+  if(error) throw error;
 
-    .name{
-      font-size:20px;
-      font-weight:900;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  return data.publicUrl;
+}
 
-    .tag{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      font-size:13px;
-      color:var(--muted);
-    }
+function renderLinks(list){
+  const wrap = $("links");
+  if(!wrap) return;
+  wrap.innerHTML = "";
 
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-      padding:7px 11px;
-      border-radius:999px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      font-size:12px;
-      color: rgba(234,242,255,.86);
-    }
+  for(const l of list){
+    const a = document.createElement("a");
+    a.className = "linkBtn";
+    a.href = l.url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = l.title;
+    wrap.appendChild(a);
+  }
+}
 
-    .dot{
-      width:8px;height:8px;border-radius:50%;
-      background: rgba(77,255,181,.95);
-      box-shadow: 0 0 18px rgba(77,255,181,.35);
-    }
+function renderLinksEditor(list, userId){
+  const wrap = $("linksEditor");
+  if(!wrap) return;
+  wrap.innerHTML = "";
 
-    .panel{padding:16px}
-    .title{
-      font-size:14px;
-      color:rgba(234,242,255,.86);
-      margin:0 0 10px;
-      font-weight:800;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .title small{
-      font-weight:600;
-      color:rgba(234,242,255,.55);
-    }
+  for(const l of list){
+    const row = document.createElement("div");
+    row.className = "linkItem";
 
-    .bio{
-      margin:0;
-      font-size:15px;
-      line-height:1.55;
-      color: rgba(234,242,255,.86);
-    }
+    const t = document.createElement("input");
+    t.className = "input";
+    t.value = l.title;
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap:12px;
-    }
-    @media (max-width:720px){
-      .grid{grid-template-columns:1fr}
-    }
+    const u = document.createElement("input");
+    u.className = "input";
+    u.value = l.url;
 
-    .card{
-      padding:14px;
-      border-radius:22px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-    }
-    .card .label{
-      font-size:12px;
-      color: rgba(234,242,255,.60);
-      margin-bottom:6px;
-    }
-    .card .value{
-      font-size:14px;
-      font-weight:800;
-      color: rgba(234,242,255,.92);
-      word-break:break-word;
-    }
+    const del = document.createElement("button");
+    del.textContent = "Удалить";
 
-    .links{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .link{
-      text-decoration:none;
-      color:var(--text);
-      padding:14px 14px;
-      border-radius:22px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      transition: transform .15s ease, border-color .15s ease;
-    }
-    .link:hover{
-      transform: translateY(-2px);
-      border-color: rgba(74,163,255,.35);
-    }
-
-    .link-left{
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-      min-width:0;
-    }
-    .link-left b{
-      font-size:14px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .link-left span{
-      font-size:12px;
-      color: rgba(234,242,255,.55);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .arrow{
-      width:40px;height:40px;
-      border-radius:14px;
-      background: rgba(74,163,255,.10);
-      border:1px solid rgba(74,163,255,.20);
-      display:grid;
-      place-items:center;
-      flex:0 0 auto;
-      box-shadow: 0 18px 40px rgba(0,0,0,.25);
-    }
-
-    .bottom{
-      position:fixed;
-      left:0; right:0; bottom:0;
-      padding: 14px 14px 18px;
-      z-index:999;
-    }
-
-    .nav{
-      width:min(980px, 92vw);
-      margin:0 auto;
-      padding:10px;
-      border-radius:28px;
-      display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap:10px;
-    }
-
-    .navbtn{
-      border:0;
-      cursor:pointer;
-      padding:12px 12px;
-      border-radius:22px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      color: rgba(234,242,255,.78);
-      font-weight:900;
-      font-size:13px;
-      transition: transform .12s ease, border-color .12s ease, background .12s ease;
-    }
-
-    .navbtn.active{
-      background: rgba(74,163,255,.14);
-      border-color: rgba(74,163,255,.40);
-      color: rgba(234,242,255,.95);
-    }
-
-    .page{display:none}
-    .page.active{display:block}
-
-    input{
-      width:100%;
-      padding:14px 14px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.20);
-      color: var(--text);
-      outline:none;
-      font-size:14px;
-    }
-
-    .btn{
-      cursor:pointer;
-      padding:14px 16px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.14);
-      background: linear-gradient(135deg, rgba(74,163,255,.22), rgba(255,255,255,.06));
-      color: var(--text);
-      font-weight:900;
-      font-size:14px;
-    }
-
-    .hint{
-      margin:10px 0 0;
-      font-size:12px;
-      color: rgba(234,242,255,.55);
-      line-height:1.45;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="liquid"></div>
-
-  <main class="wrap">
-    <!-- HERO -->
-    <section class="glass hero">
-      <div class="avatar"><span id="avatarLetters">U</span></div>
-      <div class="hero-info">
-        <div class="name" id="profileName">Загрузка...</div>
-        <div class="tag">
-          <span class="pill"><span class="dot"></span> online</span>
-          <span class="pill" id="profileSlug">/u/...</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- BIO -->
-    <section id="page-bio" class="glass panel page active">
-      <div class="title">Биография <small>• e-z.bio style</small></div>
-      <p class="bio" id="bioText">...</p>
-
-      <div style="height:14px"></div>
-
-      <div class="grid">
-        <div class="card">
-          <div class="label">Сфера</div>
-          <div class="value" id="fieldText">—</div>
-        </div>
-        <div class="card">
-          <div class="label">Контакт</div>
-          <div class="value" id="contactText">—</div>
-        </div>
-        <div class="card">
-          <div class="label">Город</div>
-          <div class="value" id="cityText">—</div>
-        </div>
-        <div class="card">
-          <div class="label">Статус</div>
-          <div class="value">Профиль активен</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- LINKS -->
-    <section id="page-links" class="glass panel page">
-      <div class="title">Ссылки <small>• tap to open</small></div>
-      <div class="links" id="linksList"></div>
-      <p class="hint">Ссылки берутся из Supabase.</p>
-    </section>
-
-    <!-- EDIT -->
-    <section id="page-edit" class="glass panel page">
-      <div class="title">Редактирование <small>• нужен Edit Key</small></div>
-
-      <input id="editKey" placeholder="Edit Key" />
-      <div style="height:10px"></div>
-      <button class="btn" id="btnSave">Сохранить (только био)</button>
-
-      <p class="hint" id="editStatus"></p>
-      <p class="hint">
-        В этом шаблоне я сделал простое редактирование био.  
-        Если хочешь — расширю на всё (имя, ссылки, темы).
-      </p>
-    </section>
-  </main>
-
-  <div class="bottom">
-    <nav class="glass nav">
-      <button class="navbtn active" data-page="bio">📌 Био</button>
-      <button class="navbtn" data-page="links">🔗 Ссылки</button>
-    </nav>
-  </div>
-
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const SUPABASE_URL = "https://qqwcgarfbptwatlytjfx.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_Cb_FoV1CslGfxIGZa7hOHg_QBvwl5L3";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const el = (id) => document.getElementById(id);
-
-    function getUsernameFromPath(){
-      // /u/ozodbek
-      const parts = location.pathname.split("/").filter(Boolean);
-      // github pages может быть /repo/u/ozodbek
-      const idx = parts.indexOf("u");
-      if(idx === -1) return null;
-      return parts[idx + 1] || null;
-    }
-
-    const username = getUsernameFromPath();
-
-    if(!username){
-      document.getElementById("profileName").textContent = "Нет username";
-      document.getElementById("bioText").textContent = "Открой страницу вида /u/username";
-      throw new Error("No username in path");
-    }
-
-    // nav
-    const pages = {
-      bio: document.getElementById("page-bio"),
-      links: document.getElementById("page-links"),
-      edit: document.getElementById("page-edit"),
+    del.onclick = async () => {
+      await supabase.from("links").delete().eq("id", l.id).eq("user_id", userId);
+      await loadProfilePage();
     };
 
-    const nav = document.querySelector(".nav");
-    nav.innerHTML = `
-      <button class="navbtn active" data-page="bio">📌 Био</button>
-      <button class="navbtn" data-page="links">🔗 Ссылки</button>
-      <button class="navbtn" data-page="edit">⚙️ Edit</button>
-    `;
+    t.onchange = async () => {
+      await supabase.from("links").update({ title: t.value }).eq("id", l.id).eq("user_id", userId);
+    };
+    u.onchange = async () => {
+      await supabase.from("links").update({ url: u.value }).eq("id", l.id).eq("user_id", userId);
+    };
 
-    const navBtns = document.querySelectorAll(".navbtn");
-    navBtns.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const key = btn.dataset.page;
+    row.appendChild(t);
+    row.appendChild(u);
+    row.appendChild(del);
+    wrap.appendChild(row);
+  }
+}
 
-        Object.values(pages).forEach(p => p.classList.remove("active"));
-        pages[key].classList.add("active");
+async function loadProfilePage(){
+  const username = normalizeUsername(getUsernameFromPath());
+  if(!username){
+    document.body.innerHTML = "<div style='padding:30px;color:white'>Нет username</div>";
+    return;
+  }
 
-        navBtns.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+  // профиль
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("username", username)
+    .maybeSingle();
+
+  if(error || !profile){
+    document.body.innerHTML = "<div style='padding:30px;color:white'>Профиль не найден</div>";
+    return;
+  }
+
+  applyTheme(profile);
+
+  $("displayName").textContent = profile.display_name || profile.username;
+  $("bio").textContent = profile.bio || "";
+
+  const ava = profile.avatar_url || "https://api.dicebear.com/7.x/thumbs/svg?seed=" + profile.username;
+  $("avatar").src = ava;
+
+  // ссылки
+  const { data: links } = await supabase
+    .from("links")
+    .select("*")
+    .eq("user_id", profile.id)
+    .order("sort", { ascending: true })
+    .order("id", { ascending: true });
+
+  renderLinks(links || []);
+
+  // проверяем авторизацию
+  const { data: auth } = await supabase.auth.getUser();
+  const me = auth?.user;
+
+  const editPanel = $("editPanel");
+  if(!editPanel) return;
+
+  if(me && me.id === profile.id){
+    editPanel.style.display = "block";
+
+    $("editName").value = profile.display_name || "";
+    $("editUsername").value = profile.username || "";
+    $("editBio").value = profile.bio || "";
+    $("editTheme").value = profile.theme || "gradient";
+    $("editAccent").value = profile.accent || "#7c3aed";
+
+    $("btnSave").onclick = async () => {
+      const newUsername = normalizeUsername($("editUsername").value);
+
+      if(newUsername.length < 3){
+        alert("Username минимум 3 символа");
+        return;
+      }
+
+      // если username меняется — проверяем занятость
+      if(newUsername !== profile.username){
+        const { data: exists } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("username", newUsername)
+          .maybeSingle();
+
+        if(exists?.username){
+          alert("Username занят");
+          return;
+        }
+      }
+
+      let avatarUrl = profile.avatar_url;
+      const file = $("avatarFile").files?.[0];
+      if(file){
+        try{
+          avatarUrl = await uploadAvatar(file, profile.id);
+        }catch(e){
+          alert("Ошибка загрузки аватара: " + e.message);
+          return;
+        }
+      }
+
+      const payload = {
+        display_name: $("editName").value.trim(),
+        username: newUsername,
+        bio: $("editBio").value.trim(),
+        theme: $("editTheme").value,
+        accent: $("editAccent").value,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error: updErr } = await supabase
+        .from("profiles")
+        .update(payload)
+        .eq("id", profile.id);
+
+      if(updErr){
+        alert("Ошибка сохранения: " + updErr.message);
+        return;
+      }
+
+      // если username поменяли — перейти на новый
+      if(newUsername !== username){
+        goToUser(newUsername);
+        return;
+      }
+
+      await loadProfilePage();
+    };
+
+    $("btnLogout").onclick = async () => {
+      await supabase.auth.signOut();
+      location.href = "./index.html";
+    };
+
+    $("btnAddLink").onclick = async () => {
+      const title = $("linkTitle").value.trim();
+      const url = $("linkUrl").value.trim();
+
+      if(!title || !url){
+        alert("Заполни title и url");
+        return;
+      }
+
+      await supabase.from("links").insert({
+        user_id: profile.id,
+        title,
+        url,
+        sort: 0
       });
-    });
 
-    // load profile
-    async function loadProfile(){
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .ilike("username", username)
-        .limit(1)
-        .maybeSingle();
+      $("linkTitle").value = "";
+      $("linkUrl").value = "";
+      await loadProfilePage();
+    };
 
-      if(error || !data){
-        el("profileName").textContent = "Профиль не найден";
-        el("profileSlug").textContent = "/u/" + username;
-        el("bioText").textContent = "Этот профиль ещё не создан.";
-        el("linksList").innerHTML = "";
-        return;
-      }
+    renderLinksEditor(links || [], profile.id);
+  } else {
+    editPanel.style.display = "none";
+  }
+}
 
-      // theme
-      if(data.theme === "black") document.body.classList.add("black");
-      if(data.gradient === false) document.body.classList.add("no-gradient");
-
-      el("profileName").textContent = data.display_name || username;
-      el("profileSlug").textContent = "/u/" + username;
-
-      const letters = (data.display_name || username)
-        .trim()
-        .split(/\s+/)
-        .slice(0,2)
-        .map(x => x[0]?.toUpperCase() || "")
-        .join("");
-
-      el("avatarLetters").textContent = letters || "U";
-
-      el("bioText").textContent = data.bio || "—";
-      el("fieldText").textContent = data.field || "—";
-      el("contactText").textContent = data.contact || "—";
-      el("cityText").textContent = data.city || "—";
-
-      // links
-      const { data: links } = await supabase
-        .from("profile_links")
-        .select("*")
-        .ilike("username", username)
-        .order("sort", { ascending: true });
-
-      const list = el("linksList");
-      list.innerHTML = "";
-
-      (links || []).forEach(item => {
-        const a = document.createElement("a");
-        a.className = "link";
-        a.href = item.url;
-        a.target = "_blank";
-        a.innerHTML = `
-          <div class="link-left">
-            <b>${escapeHtml(item.title)}</b>
-            <span>${escapeHtml(item.url)}</span>
-          </div>
-          <div class="arrow">➜</div>
-        `;
-        list.appendChild(a);
-      });
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    await loadProfile();
-
-    // simple edit bio (demo)
-    document.getElementById("btnSave").addEventListener("click", async () => {
-      const key = el("editKey").value.trim();
-      const status = el("editStatus");
-
-      if(key.length < 8){
-        status.style.color = "rgba(255,90,122,.9)";
-        status.textContent = "Неверный Edit Key.";
-        return;
-      }
-
-      const newBio = prompt("Новый текст био:");
-      if(!newBio) return;
-
-      // ВНИМАНИЕ:
-      // Здесь мы не можем реально проверить edit_key через RLS правильно
-      // без нормальной авторизации.
-      // Поэтому делаем update с условием по username+edit_key через RPC нельзя.
-      // Упростим: сделаем select, сверим edit_key на клиенте, потом update.
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("edit_key")
-        .ilike("username", username)
-        .limit(1)
-        .maybeSingle();
-
-      if(error || !data){
-        status.style.color = "rgba(255,90,122,.9)";
-        status.textContent = "Ошибка загрузки профиля.";
-        return;
-      }
-
-      if(data.edit_key !== key){
-        status.style.color = "rgba(255,90,122,.9)";
-        status.textContent = "Edit Key не подходит.";
-        return;
-      }
-
-      const { error: upErr } = await supabase
-        .from("profiles")
-        .update({ bio: newBio })
-        .ilike("username", username);
-
-      if(upErr){
-        status.style.color = "rgba(255,90,122,.9)";
-        status.textContent = "Ошибка обновления: " + upErr.message;
-        return;
-      }
-
-      status.style.color = "rgba(77,255,181,.9)";
-      status.textContent = "Сохранено.";
-      await loadProfile();
-    });
-  </script>
-</body>
-</html>
+// ---------- init ----------
+if(location.pathname.endsWith("index.html") || location.pathname === "/" || location.pathname.endsWith("/")){
+  initIndex();
+} else {
+  // profile
+  loadProfilePage();
+}
