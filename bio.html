@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bio • Liquid Glass</title>
+
+  <style>
+    :root{
+      --bg1:#040914;
+      --bg2:#061a3a;
+      --bg3:#0b2d5a;
+
+      --glass: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+
+      --text:#eaf2ff;
+      --muted: rgba(234,242,255,.72);
+
+      --blue:#4aa3ff;
+      --good:#4dffb5;
+      --bad:#ff5a7a;
+
+      --shadow: 0 30px 80px rgba(0,0,0,.45);
+      --radius: 26px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      overflow-x:hidden;
+      background:
+        radial-gradient(900px 600px at 20% 10%, rgba(74,163,255,.20), transparent 55%),
+        radial-gradient(900px 600px at 80% 20%, rgba(42,125,255,.18), transparent 60%),
+        radial-gradient(900px 700px at 40% 90%, rgba(77,255,181,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2) 55%, var(--bg3));
+    }
+
+    .liquid{
+      position:fixed;
+      inset:-30%;
+      pointer-events:none;
+      filter: blur(50px);
+      opacity:.7;
+      mix-blend-mode: screen;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(74,163,255,.25), transparent 45%),
+        radial-gradient(circle at 70% 20%, rgba(77,255,181,.18), transparent 50%),
+        radial-gradient(circle at 60% 80%, rgba(255,90,122,.12), transparent 55%);
+      animation: floaty 12s ease-in-out infinite;
+    }
+    @keyframes floaty{
+      0%{transform:translate3d(0,0,0) scale(1)}
+      50%{transform:translate3d(40px,-30px,0) scale(1.03)}
+      100%{transform:translate3d(0,0,0) scale(1)}
+    }
+
+    .wrap{
+      width:min(980px, 92vw);
+      margin: 26px auto 120px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .glass{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid var(--stroke);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero{
+      padding:18px;
+      display:flex;
+      gap:16px;
+      align-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background:
+        radial-gradient(600px 250px at 20% 20%, rgba(74,163,255,.20), transparent 60%),
+        radial-gradient(600px 250px at 80% 40%, rgba(77,255,181,.10), transparent 60%);
+      pointer-events:none;
+    }
+
+    .avatar{
+      width:86px;height:86px;
+      border-radius:26px;
+      background:
+        linear-gradient(135deg, rgba(74,163,255,.35), rgba(255,255,255,.08)),
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.25), transparent 60%);
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+      display:grid;
+      place-items:center;
+      position:relative;
+      z-index:2;
+      flex:0 0 auto;
+    }
+
+    .avatar span{
+      font-weight:800;
+      font-size:28px;
+      letter-spacing:.5px;
+      opacity:.95;
+    }
+
+    .hero-info{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      z-index:2;
+      position:relative;
+      min-width:0;
+    }
+
+    .name{
+      font-size:20px;
+      font-weight:800;
+      line-height:1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .tag{
+      font-size:13px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      padding:7px 11px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(234,242,255,.86);
+      font-size:12px;
+    }
+
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background: var(--good);
+      box-shadow: 0 0 18px rgba(77,255,181,.35);
+    }
+
+    .panel{padding:16px}
+    .title{
+      font-size:14px;
+      color:rgba(234,242,255,.86);
+      margin:0 0 10px;
+      font-weight:700;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .title small{
+      font-weight:600;
+      color:rgba(234,242,255,.55);
+    }
+
+    .bio{
+      margin:0;
+      font-size:15px;
+      line-height:1.55;
+      color: rgba(234,242,255,.86);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    @media (max-width:720px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      padding:14px;
+      border-radius:22px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      transition: transform .15s ease, border-color .15s ease;
+    }
+    .card:hover{
+      transform: translateY(-2px);
+      border-color: rgba(74,163,255,.35);
+    }
+
+    .card .label{
+      font-size:12px;
+      color: rgba(234,242,255,.60);
+      margin-bottom:6px;
+    }
+    .card .value{
+      font-size:14px;
+      font-weight:700;
+      color: rgba(234,242,255,.92);
+    }
+
+    .links{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .link{
+      text-decoration:none;
+      color:var(--text);
+      padding:14px 14px;
+      border-radius:22px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      transition: transform .15s ease, border-color .15s ease;
+    }
+    .link:hover{
+      transform: translateY(-2px);
+      border-color: rgba(74,163,255,.35);
+    }
+
+    .link-left{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      min-width:0;
+    }
+    .link-left b{
+      font-size:14px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .link-left span{
+      font-size:12px;
+      color: rgba(234,242,255,.55);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .arrow{
+      width:40px;height:40px;
+      border-radius:14px;
+      background: rgba(74,163,255,.10);
+      border:1px solid rgba(74,163,255,.20);
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      box-shadow: 0 18px 40px rgba(0,0,0,.25);
+    }
+
+    .form{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:720px){
+      .row{grid-template-columns:1fr}
+    }
+
+    input{
+      width:100%;
+      padding:14px 14px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    input::placeholder{color: rgba(234,242,255,.45)}
+    input:focus{
+      border-color: rgba(74,163,255,.45);
+      box-shadow: 0 0 0 4px rgba(74,163,255,.12);
+    }
+
+    .btn{
+      cursor:pointer;
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(135deg, rgba(74,163,255,.22), rgba(255,255,255,.06));
+      color: var(--text);
+      font-weight:800;
+      font-size:14px;
+      transition: transform .12s ease;
+    }
+    .btn:hover{transform: translateY(-1px)}
+    .btn:active{transform: translateY(0px)}
+
+    .hint{
+      margin:0;
+      font-size:12px;
+      color: rgba(234,242,255,.55);
+      line-height:1.45;
+    }
+
+    .footer{
+      text-align:center;
+      font-size:12px;
+      color: rgba(234,242,255,.45);
+      padding: 8px 0 2px;
+    }
+
+    .bottom{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      padding: 14px 14px 18px;
+      z-index:999;
+    }
+
+    .nav{
+      width:min(980px, 92vw);
+      margin:0 auto;
+      padding:10px;
+      border-radius:28px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+
+    .navbtn{
+      border:0;
+      cursor:pointer;
+      padding:12px 12px;
+      border-radius:22px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(234,242,255,.78);
+      font-weight:800;
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+
+    .navbtn.active{
+      background: rgba(74,163,255,.14);
+      border-color: rgba(74,163,255,.40);
+      color: rgba(234,242,255,.95);
+      box-shadow: 0 18px 50px rgba(0,0,0,.25);
+    }
+
+    .page{display:none}
+    .page.active{display:block}
+  </style>
+</head>
+
+<body>
+  <div class="liquid"></div>
+
+  <main class="wrap">
+    <!-- HERO -->
+    <section class="glass hero">
+      <div class="avatar"><span id="avatarLetters">OZ</span></div>
+      <div class="hero-info">
+        <div class="name" id="profileName">Профиль</div>
+        <div class="tag">
+          <span class="pill"><span class="dot"></span> online</span>
+          <span class="pill" id="profileSlug">/u/demo</span>
+          <span class="pill">Liquid Glass</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BIO PAGE -->
+    <section id="page-bio" class="glass panel page active">
+      <div class="title">Биография <small>• iOS Liquid Glass</small></div>
+
+      <p class="bio" id="bioText">
+        Это демо-профиль. Открой ссылку вида #/u/username чтобы увидеть профиль.
+      </p>
+
+      <div style="height:14px"></div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="label">Сфера</div>
+          <div class="value" id="fieldText">Разработка</div>
+        </div>
+        <div class="card">
+          <div class="label">Контакт</div>
+          <div class="value" id="contactText">@username</div>
+        </div>
+        <div class="card">
+          <div class="label">Город</div>
+          <div class="value" id="cityText">—</div>
+        </div>
+        <div class="card">
+          <div class="label">Статус</div>
+          <div class="value">Открыт к идеям</div>
+        </div>
+      </div>
+
+      <div class="footer">GitHub Pages • Supabase</div>
+    </section>
+
+    <!-- LINKS PAGE -->
+    <section id="page-links" class="glass panel page">
+      <div class="title">Ссылки <small>• быстро</small></div>
+
+      <div class="links" id="linksList">
+        <!-- вставится через JS -->
+      </div>
+
+      <p class="hint" style="margin-top:12px">
+        Ссылки тут статические (демо).  
+        Если хочешь — сделаю профили тоже через Supabase (таблица profiles).
+      </p>
+    </section>
+
+    <!-- REGISTER PAGE -->
+    <section id="page-register" class="glass panel page">
+      <div class="title">Регистрация <small>• сохранение в Supabase</small></div>
+
+      <form class="form" onsubmit="return registerUser(event)">
+        <div class="row">
+          <input id="reg_name" placeholder="Имя" required />
+          <input id="reg_user" placeholder="Username (без @)" required />
+        </div>
+
+        <input id="reg_email" placeholder="Email (необязательно)" />
+
+        <button class="btn" id="reg_btn" type="submit">Зарегистрироваться</button>
+
+        <p class="hint">
+          Данные уходят в Supabase таблицу <b>registrations</b>.  
+          Просмотр регистраций закрыт через RLS.
+        </p>
+      </form>
+
+      <div id="reg_status" class="hint" style="margin-top:10px"></div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom">
+    <nav class="glass nav">
+      <button class="navbtn active" data-page="bio">📌 Био</button>
+      <button class="navbtn" data-page="links">🔗 Ссылки</button>
+      <button class="navbtn" data-page="register">🧾 Регистрация</button>
+    </nav>
+  </div>
+
+  <!-- Supabase JS -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    // === ТВОИ ДАННЫЕ ===
+    const SUPABASE_URL = "https://qqwcgarfbptwatlytjfx.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Cb_FoV1CslGfxIGZa7hOHg_QBvwl5L3";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ===== UI NAV =====
+    const pages = {
+      bio: document.getElementById("page-bio"),
+      links: document.getElementById("page-links"),
+      register: document.getElementById("page-register"),
+    };
+    const navBtns = document.querySelectorAll(".navbtn");
+
+    navBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.page;
+
+        Object.values(pages).forEach(p => p.classList.remove("active"));
+        pages[key].classList.add("active");
+
+        navBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+
+    // ===== PROFILE ROUTING =====
+    function parseUsernameFromHash(){
+      // #/u/ozodbek
+      const h = location.hash || "";
+      const m = h.match(/^#\/u\/([a-zA-Z0-9_\.]{2,32})$/);
+      return m ? m[1] : "demo";
+    }
+
+    // DEMO profile data
+    function getDemoProfile(username){
+      // тут можно расширять
+      const map = {
+        demo: {
+          name: "Демо Профиль",
+          bio: "Это демо. Открой ссылку вида #/u/username чтобы увидеть профиль.",
+          field: "Разработка / Дизайн",
+          contact: "@username",
+          city: "—",
+          links: [
+            { title:"Telegram", url:"https://t.me/", sub:"t.me/username" },
+            { title:"GitHub", url:"https://github.com/", sub:"github.com/username" },
+            { title:"Instagram", url:"https://instagram.com/", sub:"instagram.com/username" },
+          ]
+        }
+      };
+
+      // если неизвестный username — делаем красивый шаблон
+      if(!map[username]){
+        return {
+          name: username,
+          bio: "Привет. Это страница пользователя. Здесь будет его описание и ссылки.",
+          field: "—",
+          contact: "@" + username,
+          city: "—",
+          links: [
+            { title:"Telegram", url:"https://t.me/" + username, sub:"t.me/" + username },
+            { title:"GitHub", url:"https://github.com/" + username, sub:"github.com/" + username },
+          ]
+        };
+      }
+
+      return map[username];
+    }
+
+    function setProfile(username){
+      const p = getDemoProfile(username);
+
+      document.getElementById("profileName").textContent = p.name;
+      document.getElementById("profileSlug").textContent = "/u/" + username;
+
+      const letters = (p.name || username).trim().split(/\s+/).slice(0,2).map(x => x[0]?.toUpperCase() || "").join("");
+      document.getElementById("avatarLetters").textContent = letters || "U";
+
+      document.getElementById("bioText").textContent = p.bio;
+      document.getElementById("fieldText").textContent = p.field;
+      document.getElementById("contactText").textContent = p.contact;
+      document.getElementById("cityText").textContent = p.city;
+
+      const list = document.getElementById("linksList");
+      list.innerHTML = "";
+
+      p.links.forEach(item => {
+        const a = document.createElement("a");
+        a.className = "link";
+        a.href = item.url;
+        a.target = "_blank";
+        a.innerHTML = `
+          <div class="link-left">
+            <b>${escapeHtml(item.title)}</b>
+            <span>${escapeHtml(item.sub)}</span>
+          </div>
+          <div class="arrow">➜</div>
+        `;
+        list.appendChild(a);
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    window.addEventListener("hashchange", () => {
+      setProfile(parseUsernameFromHash());
+    });
+
+    // init
+    setProfile(parseUsernameFromHash());
+
+    // ===== REGISTER TO SUPABASE =====
+    window.registerUser = async function(e){
+      e.preventDefault();
+
+      const name = document.getElementById("reg_name").value.trim();
+      const user = document.getElementById("reg_user").value.trim();
+      const email = document.getElementById("reg_email").value.trim();
+
+      const status = document.getElementById("reg_status");
+      const btn = document.getElementById("reg_btn");
+
+      status.style.color = "rgba(234,242,255,.65)";
+      status.textContent = "Отправка...";
+
+      if(user.includes("@")){
+        status.style.color = "rgba(255,90,122,.9)";
+        status.textContent = "Username вводи без @";
+        return false;
+      }
+
+      if(!/^[a-zA-Z0-9_\.]{2,32}$/.test(user)){
+        status.style.color = "rgba(255,90,122,.9)";
+        status.textContent = "Username: только латиница/цифры/_/. и длина 2-32";
+        return false;
+      }
+
+      btn.disabled = true;
+      btn.style.opacity = ".75";
+
+      try{
+        const { error } = await supabase
+          .from("registrations")
+          .insert([{
+            name,
+            username: user,
+            email: email.length ? email : null,
+            ip: null
+          }]);
+
+        if(error){
+          // уникальный username
+          if(String(error.message || "").toLowerCase().includes("duplicate")){
+            status.style.color = "rgba(255,90,122,.9)";
+            status.textContent = "Этот username уже зарегистрирован.";
+          } else {
+            status.style.color = "rgba(255,90,122,.9)";
+            status.textContent = "Ошибка Supabase: " + (error.message || "unknown");
+          }
+          return false;
+        }
+
+        status.style.color = "rgba(77,255,181,.9)";
+        status.textContent = "Готово! Регистрация сохранена в базе.";
+
+        document.getElementById("reg_name").value = "";
+        document.getElementById("reg_user").value = "";
+        document.getElementById("reg_email").value = "";
+
+      } catch(err){
+        status.style.color = "rgba(255,90,122,.9)";
+        status.textContent = "Ошибка: " + err;
+      } finally{
+        btn.disabled = false;
+        btn.style.opacity = "1";
+      }
+
+      return false;
+    };
+  </script>
+</body>
+</html>
