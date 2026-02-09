@@ -1,396 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bio</title>
+<style>
+:root{
+  --card: rgba(20, 20, 24, 0.78);
+  --stroke: rgba(255,255,255,0.10);
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.55);
+  --shadow: 0 18px 80px rgba(0,0,0,0.45);
+  --radius: 22px;
+  --accent: #7c3aed;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; margin:0; font-family: Inter, system-ui, Arial; color:var(--text); }
+body{ background:#0b0b0f; overflow-x:hidden; }
+
+.bg{
+  position:fixed; inset:0;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(124,58,237,0.22), transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(0,200,255,0.14), transparent 50%),
+    linear-gradient(180deg, #0a0a0f, #07070b);
+  filter:saturate(1.2);
+  z-index:-1;
+}
+
+.page, .profilePage{
+  min-height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+.card, .profileCard{
+  width: 460px;
+  background: var(--card);
+  border:1px solid var(--stroke);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  backdrop-filter: blur(16px);
+}
+
+.top{ margin-bottom:16px; }
+.logo{ font-size:22px; font-weight:800; letter-spacing:-0.6px; }
+.subtitle{ margin-top:4px; color:var(--muted); font-size:13px; }
+
+.tabs{ display:flex; gap:10px; margin: 14px 0; }
+.tab{
+  flex:1;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background: rgba(255,255,255,0.04);
+  color: var(--muted);
+  cursor:pointer;
+  transition: 0.2s;
+}
+.tab.active{
+  color: var(--text);
+  border-color: rgba(124,58,237,0.55);
+  background: rgba(124,58,237,0.12);
+}
+
+.input, .textarea, select{
+  width:100%;
+  padding: 12px 14px;
+  border-radius:16px;
+  border:1px solid var(--stroke);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  outline:none;
+  margin-bottom:10px;
+}
+.textarea{ min-height: 90px; resize: vertical; }
+
+.btn{
+  width:100%;
+  padding: 12px 14px;
+  border-radius:16px;
+  border:none;
+  background: linear-gradient(90deg, var(--accent), rgba(124,58,237,0.55));
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+  transition: 0.2s;
+}
+.btn:hover{ transform: translateY(-1px); }
+.btn.ghost{ background: rgba(255,255,255,0.06); border:1px solid var(--stroke); }
+
+.hint{ margin-top:10px; color: var(--muted); font-size: 13px; min-height: 18px; }
+.footer{ margin-top: 16px; padding-top: 14px; border-top:1px solid var(--stroke); }
+.small{ color:var(--muted); font-size:13px; }
+
+/* PROFILE */
+.profileHeader{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  padding: 6px 0 12px 0;
+}
+.avatar{ width:86px; height:86px; border-radius:26px; object-fit: cover; border:1px solid var(--stroke); background: rgba(255,255,255,0.04); }
+.name{ margin-top:10px; font-size:20px; font-weight:800; }
+.bio{ margin-top:6px; color: var(--muted); font-size:14px; line-height:1.35; }
+
+.links{ margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+.linkBtn{
+  display:flex; align-items:center; justify-content:center;
+  padding:13px 14px; border-radius:18px; text-decoration:none; color: var(--text);
+  border:1px solid var(--stroke); background: rgba(255,255,255,0.03); transition:0.2s;
+}
+.linkBtn:hover{ transform: translateY(-1px); border-color: rgba(124,58,237,0.45); }
+
+.panel{ margin-top:18px; border-top:1px solid var(--stroke); padding-top:16px; }
+.panelTitle{ font-weight:800; margin-bottom:10px; }
+.grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.grid > div{ min-width:0; }
+.label{ display:block; font-size:12px; color: var(--muted); margin:6px 0 6px 2px; }
+.row{ display:flex; gap:10px; }
+.row .btn{ width:auto; flex:1; }
+.divider{ margin:16px 0; height:1px; background: var(--stroke); }
+
+.linksEditor{ display:flex; flex-direction:column; gap:10px; }
+.linkItem{ display:flex; gap:10px; }
+.linkItem input{ margin:0; }
+.linkItem button{
+  width:120px; border-radius:16px; border:1px solid var(--stroke);
+  background: rgba(255,255,255,0.05); color: var(--text); cursor:pointer;
+}
+.linkItem button:hover{ border-color: rgba(255,60,60,0.4); }
+
+@media (max-width: 560px){
+  .card, .profileCard{ width:100%; }
+  .grid{ grid-template-columns: 1fr; }
+  .row{ flex-direction:column; }
+}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"></div>
+
+<!-- INDEX / LOGIN -->
+<div class="page" id="pageLogin">
+  <div class="card">
+    <div class="top">
+      <div class="logo">bio</div>
+      <div class="subtitle">Профиль как e-z.bio</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabLogin">Вход</button>
+      <button class="tab" id="tabRegister">Регистрация</button>
+    </div>
+
+    <div id="loginBox">
+      <input class="input" id="loginEmail" placeholder="Email"/>
+      <input class="input" id="loginPassword" placeholder="Пароль" type="password"/>
+      <button class="btn" id="btnLogin">Войти</button>
+    </div>
+
+    <div id="registerBox" style="display:none;">
+      <input class="input" id="regUsername" placeholder="Username (без пробелов)"/>
+      <input class="input" id="regEmail" placeholder="Email"/>
+      <input class="input" id="regPassword" placeholder="Пароль"/>
+      <button class="btn" id="btnRegister">Создать аккаунт</button>
+    </div>
+
+    <div class="hint" id="hint"></div>
+    <div class="footer"><div class="small">После входа: <b>перекинет в профиль</b></div></div>
+  </div>
+</div>
+
+<!-- PROFILE PAGE -->
+<div class="profilePage" id="pageProfile" style="display:none;">
+  <div class="profileCard">
+    <div class="profileHeader">
+      <img class="avatar" id="avatar" src="" alt="avatar"/>
+      <div class="name" id="displayName"></div>
+      <div class="bio" id="bio"></div>
+    </div>
+
+    <div class="links" id="links"></div>
+
+    <div class="panel" id="editPanel" style="display:none;">
+      <div class="panelTitle">Управление профилем</div>
+      <div class="grid">
+        <div>
+          <label class="label">Display name</label>
+          <input class="input" id="editName"/>
+        </div>
+        <div>
+          <label class="label">Username</label>
+          <input class="input" id="editUsername"/>
+        </div>
+        <div>
+          <label class="label">Bio</label>
+          <textarea class="textarea" id="editBio"></textarea>
+        </div>
+        <div>
+          <label class="label">Тема</label>
+          <select class="input" id="editTheme">
+            <option value="gradient">Градиент</option>
+            <option value="flat">Плоская</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Акцент (цвет)</label>
+          <input class="input" id="editAccent" type="color"/>
+        </div>
+        <div>
+          <label class="label">Аватар</label>
+          <input class="input" id="avatarFile" type="file" accept="image/*"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="btn" id="btnSave">Сохранить</button>
+        <button class="btn ghost" id="btnLogout">Выйти</button>
+      </div>
+
+      <div class="divider"></div>
+      <div class="panelTitle">Ссылки</div>
+      <div class="row">
+        <input class="input" id="linkTitle" placeholder="Название"/>
+        <input class="input" id="linkUrl" placeholder="https://..."/>
+        <button class="btn" id="btnAddLink">Добавить</button>
+      </div>
+
+      <div class="linksEditor" id="linksEditor"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const SUPABASE_URL = "PASTE_SUPABASE_URL";
-const SUPABASE_ANON = "PASTE_SUPABASE_ANON_KEY";
+const SUPABASE_URL = "https://qqwcgarfbptwatlytjfx.supabase.co";
+const SUPABASE_ANON = "sb_publishable_Cb_FoV1CslGfxIGZa7hOHg_QBvwl5L3";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ---------- helpers ----------
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
-function setHint(text){
-  const h = $("hint");
-  if(h) h.textContent = text || "";
-}
-
-function normalizeUsername(u){
-  return (u || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_]/g, "");
-}
-
-function isProfilePage(){
-  return location.pathname.includes("profile.html") || location.pathname.includes("/u/");
-}
-
-function getUsernameFromPath(){
-  // поддержка:
-  // /u/username
-  // /profile.html?u=username
-  const p = location.pathname;
-  const idx = p.indexOf("/u/");
-  if(idx !== -1){
-    return p.substring(idx + 3).split("/")[0];
-  }
-  const url = new URL(location.href);
-  return url.searchParams.get("u");
-}
-
+function setHint(t){ const h=$("hint"); if(h) h.textContent=t||""; }
+function normalizeUsername(u){return(u||"").trim().toLowerCase().replace(/[^a-z0-9_]/g,"");}
 function applyTheme(profile){
-  const accent = profile?.accent || "#7c3aed";
-  document.documentElement.style.setProperty("--accent", accent);
-
-  const bg = $("bg");
-  if(!bg) return;
-
-  if(profile?.theme === "flat"){
-    bg.style.background = "linear-gradient(180deg, #0a0a0f, #07070b)";
-  } else {
-    bg.style.background =
-      `radial-gradient(circle at 30% 20%, ${accent}33, transparent 45%),
-       radial-gradient(circle at 80% 70%, rgba(0,200,255,0.14), transparent 50%),
-       linear-gradient(180deg, #0a0a0f, #07070b)`;
-  }
+  const accent = profile?.accent||"#7c3aed";
+  document.documentElement.style.setProperty("--accent",accent);
+  const bg=$("bg"); if(!bg)return;
+  if(profile?.theme==="flat"){ bg.style.background="linear-gradient(180deg,#0a0a0f,#07070b)"; }
+  else{ bg.style.background=`radial-gradient(circle at 30% 20%, ${accent}33, transparent 45%), radial-gradient(circle at 80% 70%, rgba(0,200,255,0.14), transparent 50%), linear-gradient(180deg,#0a0a0f,#07070b)`;}
 }
+function goToProfile(username){ showProfilePage(); loadProfilePage(username); }
 
-function goToUser(username){
-  // GitHub Pages не умеет нормальные роуты без 404.html
-  // поэтому делаем fallback:
-  // profile.html?u=username
-  location.href = `./profile.html?u=${encodeURIComponent(username)}`;
-}
+function showProfilePage(){ $("pageLogin").style.display="none"; $("pageProfile").style.display="flex"; }
 
-// ---------- index page ----------
-async function initIndex(){
-  const tabLogin = $("tabLogin");
-  const tabRegister = $("tabRegister");
-  const loginBox = $("loginBox");
-  const registerBox = $("registerBox");
+// ---------- INDEX PAGE ----------
+function initIndex(){
+  const tabLogin=$("tabLogin"), tabRegister=$("tabRegister");
+  const loginBox=$("loginBox"), registerBox=$("registerBox");
 
-  if(!tabLogin) return;
+  tabLogin.onclick=()=>{ tabLogin.classList.add("active"); tabRegister.classList.remove("active"); loginBox.style.display="block"; registerBox.style.display="none"; setHint(""); };
+  tabRegister.onclick=()=>{ tabRegister.classList.add("active"); tabLogin.classList.remove("active"); registerBox.style.display="block"; loginBox.style.display="none"; setHint(""); };
 
-  tabLogin.onclick = () => {
-    tabLogin.classList.add("active");
-    tabRegister.classList.remove("active");
-    loginBox.style.display = "block";
-    registerBox.style.display = "none";
-    setHint("");
-  };
-
-  tabRegister.onclick = () => {
-    tabRegister.classList.add("active");
-    tabLogin.classList.remove("active");
-    registerBox.style.display = "block";
-    loginBox.style.display = "none";
-    setHint("");
-  };
-
-  $("btnLogin").onclick = async () => {
+  $("btnLogin").onclick=async()=>{
     setHint("Входим...");
-    const email = $("loginEmail").value.trim();
-    const password = $("loginPassword").value;
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if(error){
-      setHint("Ошибка: " + error.message);
-      return;
-    }
-
-    const user = data.user;
-    const { data: prof } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if(!prof?.username){
-      setHint("Профиль не найден. Создай новый аккаунт.");
-      return;
-    }
-
-    setHint("Готово!");
-    goToUser(prof.username);
+    const email=$("loginEmail").value.trim(), password=$("loginPassword").value;
+    const { data, error } = await supabase.auth.signInWithPassword({email,password});
+    if(error){ setHint(error.message); return; }
+    const user=data.user;
+    const { data: prof } = await supabase.from("profiles").select("username").eq("id",user.id).maybeSingle();
+    if(!prof?.username){ setHint("Профиль не найден."); return; }
+    goToProfile(prof.username);
   };
 
-  $("btnRegister").onclick = async () => {
+  $("btnRegister").onclick=async()=>{
     setHint("Создаём аккаунт...");
-
     let username = normalizeUsername($("regUsername").value);
     const email = $("regEmail").value.trim();
     const password = $("regPassword").value;
-
-    if(username.length < 3){
-      setHint("Username минимум 3 символа (a-z 0-9 _).");
-      return;
-    }
-
-    const { data: exists } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("username", username)
-      .maybeSingle();
-
-    if(exists?.username){
-      setHint("Этот username занят.");
-      return;
-    }
-
+    if(username.length<3){ setHint("Username минимум 3 символа."); return; }
+    const { data: exists } = await supabase.from("profiles").select("username").eq("username",username).maybeSingle();
+    if(exists?.username){ setHint("Username занят."); return; }
     const { data, error } = await supabase.auth.signUp({ email, password });
-    if(error){
-      setHint("Ошибка: " + error.message);
-      return;
-    }
-
-    const user = data.user;
-    if(!user){
-      setHint("Проверь email (возможно нужна верификация).");
-      return;
-    }
-
-    const { error: insertErr } = await supabase
-      .from("profiles")
-      .insert({
-        id: user.id,
-        username,
-        display_name: username,
-        bio: "",
-        avatar_url: "",
-        theme: "gradient",
-        accent: "#7c3aed"
-      });
-
-    if(insertErr){
-      setHint("Ошибка создания профиля: " + insertErr.message);
-      return;
-    }
-
-    setHint("Аккаунт создан!");
-    goToUser(username);
+    if(error){ setHint(error.message); return; }
+    const user=data.user;
+    await supabase.from("profiles").insert({id:user.id, username, display_name:username, bio:"", avatar_url:"", theme:"gradient", accent:"#7c3aed"});
+    goToProfile(username);
   };
 }
 
-// ---------- profile page ----------
-async function uploadAvatar(file, userId){
-  const ext = file.name.split(".").pop();
-  const path = `${userId}/${Date.now()}.${ext}`;
-
-  const { error } = await supabase.storage
-    .from("avatars")
-    .upload(path, file, { upsert: true });
-
+// ---------- PROFILE PAGE ----------
+async function uploadAvatar(file,userId){
+  const ext=file.name.split(".").pop();
+  const path=`${userId}/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("avatars").upload(path,file,{upsert:true});
   if(error) throw error;
-
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);
   return data.publicUrl;
 }
 
 function renderLinks(list){
-  const wrap = $("links");
-  if(!wrap) return;
-  wrap.innerHTML = "";
+  const wrap=$("links"); if(!wrap) return; wrap.innerHTML="";
+  for(const l of list){ const a=document.createElement("a"); a.className="linkBtn"; a.href=l.url; a.target="_blank"; a.rel="noopener noreferrer"; a.textContent=l.title; wrap.appendChild(a);}
+}
 
+function renderLinksEditor(list,userId){
+  const wrap=$("linksEditor"); if(!wrap) return; wrap.innerHTML="";
   for(const l of list){
-    const a = document.createElement("a");
-    a.className = "linkBtn";
-    a.href = l.url;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.textContent = l.title;
-    wrap.appendChild(a);
+    const row=document.createElement("div"); row.className="linkItem";
+    const t=document.createElement("input"); t.className="input"; t.value=l.title;
+    const u=document.createElement("input"); u.className="input"; u.value=l.url;
+    const del=document.createElement("button"); del.textContent="Удалить";
+    del.onclick=async()=>{ await supabase.from("links").delete().eq("id",l.id).eq("user_id",userId); await loadProfilePage(l.username);}
+    t.onchange=async()=>{ await supabase.from("links").update({title:t.value}).eq("id",l.id).eq("user_id",userId);}
+    u.onchange=async()=>{ await supabase.from("links").update({url:u.value}).eq("id",l.id).eq("user_id",userId);}
+    row.appendChild(t); row.appendChild(u); row.appendChild(del); wrap.appendChild(row);
   }
 }
 
-function renderLinksEditor(list, userId){
-  const wrap = $("linksEditor");
-  if(!wrap) return;
-  wrap.innerHTML = "";
-
-  for(const l of list){
-    const row = document.createElement("div");
-    row.className = "linkItem";
-
-    const t = document.createElement("input");
-    t.className = "input";
-    t.value = l.title;
-
-    const u = document.createElement("input");
-    u.className = "input";
-    u.value = l.url;
-
-    const del = document.createElement("button");
-    del.textContent = "Удалить";
-
-    del.onclick = async () => {
-      await supabase.from("links").delete().eq("id", l.id).eq("user_id", userId);
-      await loadProfilePage();
-    };
-
-    t.onchange = async () => {
-      await supabase.from("links").update({ title: t.value }).eq("id", l.id).eq("user_id", userId);
-    };
-    u.onchange = async () => {
-      await supabase.from("links").update({ url: u.value }).eq("id", l.id).eq("user_id", userId);
-    };
-
-    row.appendChild(t);
-    row.appendChild(u);
-    row.appendChild(del);
-    wrap.appendChild(row);
-  }
-}
-
-async function loadProfilePage(){
-  const username = normalizeUsername(getUsernameFromPath());
-  if(!username){
-    document.body.innerHTML = "<div style='padding:30px;color:white'>Нет username</div>";
-    return;
-  }
-
-  // профиль
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .maybeSingle();
-
-  if(error || !profile){
-    document.body.innerHTML = "<div style='padding:30px;color:white'>Профиль не найден</div>";
-    return;
-  }
-
+async function loadProfilePage(username){
+  username = normalizeUsername(username || (new URL(location.href).searchParams.get("u")||""));
+  if(!username){ document.body.innerHTML="<div style='padding:30px;color:white'>Нет username</div>"; return; }
+  const { data: profile, error } = await supabase.from("profiles").select("*").eq("username",username).maybeSingle();
+  if(error||!profile){ document.body.innerHTML="<div style='padding:30px;color:white'>Профиль не найден</div>"; return; }
   applyTheme(profile);
+  $("displayName").textContent = profile.display_name||profile.username;
+  $("bio").textContent = profile.bio||"";
+  $("avatar").src = profile.avatar_url || "https://api.dicebear.com/7.x/thumbs/svg?seed="+profile.username;
 
-  $("displayName").textContent = profile.display_name || profile.username;
-  $("bio").textContent = profile.bio || "";
+  const { data: links } = await supabase.from("links").select("*").eq("user_id",profile.id).order("sort",{ascending:true}).order("id",{ascending:true});
+  renderLinks(links||[]);
 
-  const ava = profile.avatar_url || "https://api.dicebear.com/7.x/thumbs/svg?seed=" + profile.username;
-  $("avatar").src = ava;
-
-  // ссылки
-  const { data: links } = await supabase
-    .from("links")
-    .select("*")
-    .eq("user_id", profile.id)
-    .order("sort", { ascending: true })
-    .order("id", { ascending: true });
-
-  renderLinks(links || []);
-
-  // проверяем авторизацию
   const { data: auth } = await supabase.auth.getUser();
-  const me = auth?.user;
+  const me=auth?.user;
+  const editPanel=$("editPanel");
+  if(me && me.id===profile.id){
+    editPanel.style.display="block";
+    $("editName").value=profile.display_name||"";
+    $("editUsername").value=profile.username||"";
+    $("editBio").value=profile.bio||"";
+    $("editTheme").value=profile.theme||"gradient";
+    $("editAccent").value=profile.accent||"#7c3aed";
 
-  const editPanel = $("editPanel");
-  if(!editPanel) return;
-
-  if(me && me.id === profile.id){
-    editPanel.style.display = "block";
-
-    $("editName").value = profile.display_name || "";
-    $("editUsername").value = profile.username || "";
-    $("editBio").value = profile.bio || "";
-    $("editTheme").value = profile.theme || "gradient";
-    $("editAccent").value = profile.accent || "#7c3aed";
-
-    $("btnSave").onclick = async () => {
-      const newUsername = normalizeUsername($("editUsername").value);
-
-      if(newUsername.length < 3){
-        alert("Username минимум 3 символа");
-        return;
+    $("btnSave").onclick=async()=>{
+      const newUsername=normalizeUsername($("editUsername").value);
+      if(newUsername.length<3){ alert("Username минимум 3 символа"); return; }
+      if(newUsername!==profile.username){
+        const { data: exists } = await supabase.from("profiles").select("username").eq("username",newUsername).maybeSingle();
+        if(exists?.username){ alert("Username занят"); return; }
       }
-
-      // если username меняется — проверяем занятость
-      if(newUsername !== profile.username){
-        const { data: exists } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("username", newUsername)
-          .maybeSingle();
-
-        if(exists?.username){
-          alert("Username занят");
-          return;
-        }
-      }
-
-      let avatarUrl = profile.avatar_url;
-      const file = $("avatarFile").files?.[0];
-      if(file){
-        try{
-          avatarUrl = await uploadAvatar(file, profile.id);
-        }catch(e){
-          alert("Ошибка загрузки аватара: " + e.message);
-          return;
-        }
-      }
-
-      const payload = {
-        display_name: $("editName").value.trim(),
-        username: newUsername,
-        bio: $("editBio").value.trim(),
-        theme: $("editTheme").value,
-        accent: $("editAccent").value,
-        avatar_url: avatarUrl,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error: updErr } = await supabase
-        .from("profiles")
-        .update(payload)
-        .eq("id", profile.id);
-
-      if(updErr){
-        alert("Ошибка сохранения: " + updErr.message);
-        return;
-      }
-
-      // если username поменяли — перейти на новый
-      if(newUsername !== username){
-        goToUser(newUsername);
-        return;
-      }
-
-      await loadProfilePage();
+      let avatarUrl=profile.avatar_url;
+      const file=$("avatarFile").files?.[0];
+      if(file){ try{ avatarUrl=await uploadAvatar(file,profile.id); }catch(e){ alert(e.message); return; } }
+      const payload={ display_name:$("editName").value.trim(), username:newUsername, bio:$("editBio").value.trim(), theme:$("editTheme").value, accent:$("editAccent").value, avatar_url:avatarUrl, updated_at:new Date().toISOString() };
+      const { error: updErr } = await supabase.from("profiles").update(payload).eq("id",profile.id);
+      if(updErr){ alert(updErr.message); return; }
+      if(newUsername!==username){ loadProfilePage(newUsername); return; }
+      await loadProfilePage(username);
     };
 
-    $("btnLogout").onclick = async () => {
-      await supabase.auth.signOut();
-      location.href = "./index.html";
+    $("btnLogout").onclick=async()=>{ await supabase.auth.signOut(); location.reload(); };
+    $("btnAddLink").onclick=async()=>{
+      const title=$("linkTitle").value.trim(), url=$("linkUrl").value.trim();
+      if(!title||!url){ alert("Заполни title и url"); return; }
+      await supabase.from("links").insert({ user_id: profile.id, title, url, sort:0});
+      $("linkTitle").value=""; $("linkUrl").value="";
+      await loadProfilePage(username);
     };
 
-    $("btnAddLink").onclick = async () => {
-      const title = $("linkTitle").value.trim();
-      const url = $("linkUrl").value.trim();
-
-      if(!title || !url){
-        alert("Заполни title и url");
-        return;
-      }
-
-      await supabase.from("links").insert({
-        user_id: profile.id,
-        title,
-        url,
-        sort: 0
-      });
-
-      $("linkTitle").value = "";
-      $("linkUrl").value = "";
-      await loadProfilePage();
-    };
-
-    renderLinksEditor(links || [], profile.id);
-  } else {
-    editPanel.style.display = "none";
-  }
+    renderLinksEditor(links||[],profile.id);
+  }else{ editPanel.style.display="none"; }
 }
 
-// ---------- init ----------
-if(location.pathname.endsWith("index.html") || location.pathname === "/" || location.pathname.endsWith("/")){
-  initIndex();
-} else {
-  // profile
-  loadProfilePage();
-}
+initIndex();
+</script>
+</body>
+</html>
